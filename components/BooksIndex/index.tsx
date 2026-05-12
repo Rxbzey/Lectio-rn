@@ -5,18 +5,21 @@ import { useBooksIndexTheme } from './hooks/useBooksIndexTheme';
 import { BooksHeader } from './BooksHeader';
 import { BooksSection } from './BooksSection';
 import { FloatingActionButton } from '../LectioVeritatis/FloatingActionButton';
+import { BookProgressMap } from '../../lib/bookProgress';
 
 interface BooksIndexProps {
   isDark: boolean;
   activeBookSlug?: string;
   appBarHeight?: number;
+  bookProgressMap?: BookProgressMap;
   onClose?: () => void;
   onBookPress?: (bookSlug: string) => void;
   onHome?: () => void;
   onSearch?: () => void;
+  onMarks?: () => void;
 }
 
-export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, appBarHeight, onClose, onBookPress, onHome, onSearch }) => {
+export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, appBarHeight, bookProgressMap, onClose, onBookPress, onHome, onSearch, onMarks }) => {
   const insets = useSafeAreaInsets();
   const { bgColor, titleColor, bodyColor, outlineColor, mutedColor } = useBooksIndexTheme(isDark);
 
@@ -36,12 +39,13 @@ export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, 
               bodyColor={bodyColor}
               outlineColor={outlineColor}
               activeBookSlug={activeBookSlug}
+              bookProgressMap={bookProgressMap}
               onBookPress={onBookPress}
             />
           ))}
         </View>
       </ScrollView>
-      <FloatingActionButton isDark={isDark} onHome={onHome} onBooks={onClose} onSearch={onSearch} />
+      <FloatingActionButton isDark={isDark} onHome={onHome} onBooks={onClose} onSearch={onSearch} onMarks={onMarks} />
     </View>
   );
 };

@@ -4,6 +4,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import * as ExpoSharing from 'expo-sharing';
+import {
+  readVerseMarks,
+  saveVerseMark,
+  readColorConfig,
+  makeMarkId,
+  DEFAULT_COLOR_NAMES,
+  type MarkColor,
+  type VerseMarksStore,
+} from '../../lib/verseMarks';
 import ViewShot from 'react-native-view-shot';
 import { ChapterIntro } from './ChapterIntro';
 import { VerseBlock } from './VerseBlock';
@@ -23,6 +32,7 @@ interface ChapterReaderProps {
   onProgressChange?: (progress: { bookSlug: string; bookName: string; chapter: number; scrollPercent: number; verseCount?: number }) => void;
   onHome?: () => void;
   onBooks?: () => void;
+  onMarks?: () => void;
   onChapters?: () => void;
   onVerses?: () => void;
 }
@@ -47,6 +57,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   onProgressChange,
   onHome,
   onBooks,
+  onMarks,
   onChapters,
   onVerses,
 }) => {
@@ -56,6 +67,8 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   const [chapterData, setChapterData] = useState<ChapterResponse | null>(null);
   const [error, setError] = useState(false);
   const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
+  const [verseMarks, setVerseMarks] = useState<VerseMarksStore>([]);
+  const [colorNames, setColorNames] = useState<Record<MarkColor, string>>(DEFAULT_COLOR_NAMES);
   const contentHeightRef = useRef(0);
   const viewportHeightRef = useRef(0);
   const onProgressChangeRef = useRef(onProgressChange);
@@ -63,6 +76,11 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   const insets = useSafeAreaInsets();
 
   useEffect(() => { onProgressChangeRef.current = onProgressChange; }, [onProgressChange]);
+
+  useEffect(() => {
+    readVerseMarks().then(setVerseMarks);
+    readColorConfig().then(setColorNames);
+  }, []);
   const backgroundColor = isDark ? '#000000' : '#efe6d4';
   const bookName = chapterData?.book.name ?? '';
   const testamentLabel = chapterData?.book.group ?? '';
@@ -110,6 +128,30 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
         scrollRef.current?.scrollTo?.({ y: absoluteY, animated: true });
       });
     }, 200);
+  };
+
+  const handleMark = async (color: MarkColor) => {
+    if (!chapterData || selectedVerses.size === 0) return;
+    const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+    const verseStart = sorted[0];
+    const verseEnd = sorted[sorted.length - 1];
+    const verseTexts = chapterData.verses
+      .filter((v) => selectedVerses.has(v.number))
+      .map((v) => ({ number: v.number, text: v.text }));
+    const mark = {
+      id: makeMarkId(bookSlug, chapter, verseStart, verseEnd),
+      bookSlug,
+      bookName: chapterData.book.name,
+      chapter,
+      verseStart,
+      verseEnd,
+      verseTexts,
+      color,
+      createdAt: Date.now(),
+    };
+    const updated = await saveVerseMark(mark);
+    setVerseMarks(updated);
+    setSelectedVerses(new Set());
   };
 
   const handleVerseLongPress = (verseNumber: number) => {
@@ -210,10 +252,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
               verses={verses}
               isDark={isDark}
               bookName={bookName}
+              bookSlug={bookSlug}
               chapter={chapter}
               testamentLabel={testamentLabel}
               highlightVerse={selectedVerses.size === 0 ? targetVerse : undefined}
               selectedVerses={selectedVerses}
+              verseMarks={verseMarks}
               onVerseRef={handleVerseRef}
               onVerseLongPress={handleVerseLongPress}
               onVersePress={handleVersePress}
@@ -251,8 +295,10 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
         <VerseSelectionToolbar
           isDark={isDark}
           selectedCount={selectedVerses.size}
+          colorNames={colorNames}
           onCopy={handleCopy}
           onShare={handleShare}
+          onMark={handleMark}
           onClear={() => setSelectedVerses(new Set())}
         />
       )}
@@ -263,6 +309,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
           isReader
           onHome={onHome}
           onBooks={onBooks}
+          onMarks={onMarks}
           onChapters={onChapters}
           onVerses={onVerses}
         />

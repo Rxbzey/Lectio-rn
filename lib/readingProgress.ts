@@ -1,7 +1,6 @@
-import { Platform } from 'react-native';
+import { storageGet, storageSet } from './storage';
 
-const STORAGE_KEY = 'lectio:last-reading-progress';
-let memoryProgress: ReadingProgress | null = null;
+const KEY = 'lectio:last-reading-progress';
 
 export interface ReadingProgress {
   bookSlug: string;
@@ -11,28 +10,12 @@ export interface ReadingProgress {
   updatedAt: number;
 }
 
-function canUseLocalStorage(): boolean {
-  return Platform.OS === 'web' && typeof globalThis.localStorage !== 'undefined';
-}
-
 export async function readReadingProgress(): Promise<ReadingProgress | null> {
-  if (!canUseLocalStorage()) return memoryProgress;
-
-  const raw = globalThis.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as ReadingProgress;
-    if (!parsed.bookSlug || !parsed.bookName || !Number.isFinite(parsed.chapter)) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+  const parsed = await storageGet<ReadingProgress>(KEY);
+  if (!parsed?.bookSlug || !parsed.bookName || !Number.isFinite(parsed.chapter)) return null;
+  return parsed;
 }
 
 export async function saveReadingProgress(progress: ReadingProgress): Promise<void> {
-  memoryProgress = progress;
-  if (canUseLocalStorage()) {
-    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  }
+  await storageSet(KEY, progress);
 }

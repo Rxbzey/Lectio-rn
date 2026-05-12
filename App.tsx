@@ -9,11 +9,14 @@ import { ChapterReader } from 'components/ChapterReader';
 import { LectioVeritatis } from 'components/LectioVeritatis';
 import { SearchScreen } from 'components/SearchScreen';
 import { NumberGridScreen } from 'components/NumberGridScreen';
+import { MarksScreen } from 'components/MarksScreen';
 import { BOOKS_META, slugifyBookName } from './data/biblia/books-meta';
 import { Animated, Easing, Platform, View, Text, useColorScheme } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import { readReadingProgress, type ReadingProgress } from './lib/readingProgress';
+import { readTheme, saveTheme } from './lib/theme';
+import { readBookProgressMap, markChapterRead, type BookProgressMap } from './lib/bookProgress';
 import { getRandomVerse } from './data/bibleVerses';
 
 import {
@@ -40,7 +43,7 @@ const paperTheme = {
 
 export default function App() {
   const colorScheme = useColorScheme();
-  type Screen = 'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search';
+  type Screen = 'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search' | 'marks';
   const [screen, setScreen] = useState<Screen>('home');
   const screenStack = useRef<Screen[]>(['home']);
   const [isDark, setIsDark] = useState(colorScheme === 'dark');
@@ -51,6 +54,7 @@ export default function App() {
   const [initialScrollPercent, setInitialScrollPercent] = useState(0);
   const [targetVerse, setTargetVerse] = useState<number | undefined>(undefined);
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
+  const [bookProgressMap, setBookProgressMap] = useState<BookProgressMap>({});
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; reference: string } | null>(null);
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [currentVerseCount, setCurrentVerseCount] = useState(0);
@@ -60,6 +64,7 @@ export default function App() {
   const versesProgress = useRef(new Animated.Value(0)).current;
   const readerProgress = useRef(new Animated.Value(0)).current;
   const searchProgress = useRef(new Animated.Value(0)).current;
+  const marksProgress = useRef(new Animated.Value(0)).current;
 
   const getBookMeta = (slug: string) => BOOKS_META.find((b) => slugifyBookName(b.name) === slug);
   const selectedBookMeta = getBookMeta(selectedBookSlug);
@@ -72,6 +77,7 @@ export default function App() {
     verses: versesProgress,
     reader: readerProgress,
     search: searchProgress,
+    marks: marksProgress,
   };
 
   const animateTransition = (from: Screen, to: Screen) => {
@@ -110,6 +116,10 @@ export default function App() {
     readReadingProgress().then((progress) => {
       if (progress) setReadingProgress(progress);
     });
+    readTheme().then((saved) => {
+      if (saved !== null) setIsDark(saved === 'dark');
+    });
+    readBookProgressMap().then(setBookProgressMap);
   }, []);
 
   useEffect(() => {
@@ -149,12 +159,17 @@ export default function App() {
     animateTransition(from, prev);
   };
 
-  const toggleTheme = () => setIsDark((current) => !current);
+  const toggleTheme = () => setIsDark((current) => {
+    const next = !current;
+    void saveTheme(next);
+    return next;
+  });
   const openReader = (bookSlug: string, chapter: number, scrollPercent = 0, verse?: number) => {
     setCurrentBookSlug(bookSlug);
     setCurrentChapter(chapter);
     setInitialScrollPercent(verse ? 0 : scrollPercent);
     setTargetVerse(verse);
+    if (screen === 'reader') return;
     navigateTo('reader');
   };
   const openChapters = (bookSlug: string) => {
@@ -212,7 +227,6 @@ export default function App() {
         >
           <LectioVeritatis
             isDark={isDark}
-            onToggleTheme={toggleTheme}
             hasProgress={Boolean(readingProgress)}
             progressLabel={progressLabel}
             verseOfDay={verseOfDay}
@@ -220,6 +234,7 @@ export default function App() {
             onExploreBooks={() => navigateTo('books')}
             onHome={() => jumpTo('home')}
             onSearch={() => jumpTo('search')}
+            onMarks={() => navigateTo('marks')}
           />
         </Animated.View>
 
@@ -248,10 +263,12 @@ export default function App() {
             isDark={isDark}
             activeBookSlug={currentBookSlug}
             appBarHeight={appBarHeight}
+            bookProgressMap={bookProgressMap}
             onClose={goBack}
             onBookPress={(bookSlug) => openChapters(bookSlug)}
             onHome={() => jumpTo('home')}
             onSearch={() => jumpTo('search')}
+            onMarks={() => navigateTo('marks')}
           />
         </Animated.View>
 
@@ -284,11 +301,18 @@ export default function App() {
             initialScrollPercent={initialScrollPercent}
             targetVerse={targetVerse}
             onProgressChange={(progress) => {
+              const bookMeta = getBookMeta(progress.bookSlug);
               setReadingProgress({ ...progress, updatedAt: Date.now() });
               setCurrentVerseCount(progress.verseCount ?? 0);
+              if (bookMeta) {
+                void markChapterRead(progress.bookSlug, progress.chapter, bookMeta.chapters).then(() => {
+                  readBookProgressMap().then(setBookProgressMap);
+                });
+              }
             }}
             onHome={() => jumpTo('home')}
             onBooks={() => jumpTo('books')}
+            onMarks={() => navigateTo('marks')}
             onChapters={() => openChapters(currentBookSlug)}
             onVerses={() => openVerses(currentChapter)}
           />
@@ -389,6 +413,36 @@ export default function App() {
             isDark={isDark}
             appBarHeight={appBarHeight}
             onResultPress={(bookSlug, chapter) => openReader(bookSlug, chapter, 0)}
+          />
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents={screen === 'marks' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            opacity: marksProgress,
+            transform: [
+              {
+                translateY: marksProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [booksEnterY, 0],
+                }),
+              },
+              {
+                scale: marksProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <MarksScreen
+            isDark={isDark}
+            active={screen === 'marks'}
+            appBarHeight={appBarHeight}
+            onClose={goBack}
+            onOpenMark={(bookSlug, chapter, verse) => openReader(bookSlug, chapter, 0, verse)}
           />
         </Animated.View>
         <AppBar

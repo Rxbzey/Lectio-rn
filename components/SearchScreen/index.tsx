@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type SearchResult } from '../../lib/api';
 import { useSearch } from './hooks/useSearch';
@@ -29,7 +29,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ isDark, appBarHeight
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: theme.bg }}
+    >
       {/* Header tipográfico */}
       <View className="px-6 flex-row justify-between items-start" style={{ paddingTop: headerTop }}>
         <View className="flex-1 gap-1">
@@ -85,6 +88,6 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ isDark, appBarHeight
           contentContainerStyle={{ paddingBottom: insets.bottom + 96, paddingTop: 8 }}
         />
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 };

@@ -2,16 +2,18 @@ import { View } from 'react-native';
 import { BookSection, slugifyBookName } from './data/books';
 import { SectionHeader } from './SectionHeader';
 import { BookButton } from './BookButton';
+import { BookProgressMap, getBookStatus } from '../../lib/bookProgress';
 
 interface BooksSectionProps {
   section: BookSection;
   bodyColor: string;
   outlineColor: string;
   activeBookSlug?: string;
+  bookProgressMap?: BookProgressMap;
   onBookPress?: (bookSlug: string) => void;
 }
 
-export const BooksSection: React.FC<BooksSectionProps> = ({ section, bodyColor, outlineColor, activeBookSlug, onBookPress }) => {
+export const BooksSection: React.FC<BooksSectionProps> = ({ section, bodyColor, outlineColor, activeBookSlug, bookProgressMap, onBookPress }) => {
   return (
     <View className="mb-12">
       <SectionHeader title={section.title} ornament={section.ornament} outlineColor={outlineColor} />
@@ -23,6 +25,7 @@ export const BooksSection: React.FC<BooksSectionProps> = ({ section, bodyColor, 
                 key={book.id}
                 book={book}
                 active={slugifyBookName(book.name) === activeBookSlug}
+                status={getBookStatus(bookProgressMap?.[slugifyBookName(book.name)])}
                 bodyColor={bodyColor}
                 onPress={() => onBookPress?.(slugifyBookName(book.name))}
               />

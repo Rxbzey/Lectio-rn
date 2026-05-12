@@ -8,6 +8,7 @@ interface FloatingActionButtonProps {
   onHome?: () => void;
   onBooks?: () => void;
   onSearch?: () => void;
+  onMarks?: () => void;
   onChapters?: () => void;
   onVerses?: () => void;
 }
@@ -65,6 +66,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onHome,
   onBooks,
   onSearch,
+  onMarks,
   onChapters,
   onVerses,
 }) => {
@@ -105,6 +107,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       : []),
     { icon: 'home-outline' as const, label: 'INICIO', onPress: () => closeThen(onHome) },
     { icon: 'book-open-page-variant' as const, label: 'LIBROS', onPress: () => closeThen(onBooks) },
+    { icon: 'bookmark-multiple-outline' as const, label: 'MARCAS', onPress: () => closeThen(onMarks) },
     { icon: 'magnify' as const, label: 'BUSCAR', onPress: () => closeThen(onSearch) },
   ];
 

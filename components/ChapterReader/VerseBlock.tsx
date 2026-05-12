@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { getMarkForVerse, MARK_PALETTE, type VerseMarksStore } from '../../lib/verseMarks';
 
 interface Verse {
   number: number;
@@ -9,10 +10,12 @@ interface VerseBlockProps {
   verses: Verse[];
   isDark: boolean;
   bookName: string;
+  bookSlug: string;
   chapter: number;
   testamentLabel: string;
   highlightVerse?: number;
   selectedVerses?: Set<number>;
+  verseMarks?: VerseMarksStore;
   onVerseRef?: (verseNumber: number, ref: View | null) => void;
   onVerseLongPress?: (verseNumber: number) => void;
   onVersePress?: (verseNumber: number) => void;
@@ -26,7 +29,7 @@ const OrnamentDivider: React.FC<{ gold: string }> = ({ gold }) => (
   </View>
 );
 
-export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName, chapter, testamentLabel, highlightVerse, selectedVerses, onVerseRef, onVerseLongPress, onVersePress }) => {
+export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName, bookSlug, chapter, testamentLabel, highlightVerse, selectedVerses, verseMarks, onVerseRef, onVerseLongPress, onVersePress }) => {
   const textColor = isDark ? 'rgba(201,196,184,0.78)' : 'rgba(61,54,41,0.82)';
   const gold = isDark ? '#c5a059' : '#775a19';
   const mutedGold = isDark ? 'rgba(197,160,89,0.55)' : 'rgba(119,90,25,0.55)';
@@ -111,6 +114,8 @@ export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName
           const isHighlighted = verse.number === highlightVerse;
           const isSelected = selectedVerses?.has(verse.number) ?? false;
           const isActive = isHighlighted || isSelected;
+          const mark = verseMarks ? getMarkForVerse(verseMarks, bookSlug, chapter, verse.number) : undefined;
+          const palette = mark ? MARK_PALETTE[mark.color] : undefined;
           return (
             <Pressable
               key={verse.number}
@@ -128,13 +133,15 @@ export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName
                     ? (isDark ? 'rgba(197,160,89,0.15)' : 'rgba(119,90,25,0.10)')
                     : isHighlighted
                       ? (isDark ? 'rgba(197,160,89,0.10)' : 'rgba(119,90,25,0.07)')
-                      : 'transparent',
-                  borderLeftWidth: isActive ? 2 : 0,
-                  borderLeftColor: gold,
-                  paddingLeft: isActive ? 10 : 0,
-                  paddingVertical: isActive ? 6 : 0,
-                  marginLeft: isActive ? -12 : 0,
-                  borderRadius: isActive ? 4 : 0,
+                      : palette
+                        ? (isDark ? palette.bgDark : palette.bg)
+                        : 'transparent',
+                  borderLeftWidth: isActive || !!palette ? 2 : 0,
+                  borderLeftColor: isActive ? gold : palette ? (isDark ? palette.borderDark : palette.border) : gold,
+                  paddingLeft: isActive || !!palette ? 10 : 0,
+                  paddingVertical: isActive || !!palette ? 6 : 0,
+                  marginLeft: isActive || !!palette ? -12 : 0,
+                  borderRadius: isActive || !!palette ? 4 : 0,
                 }}
               >
                 {/* Superscript verse number */}

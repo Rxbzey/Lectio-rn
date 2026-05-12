@@ -10,7 +10,6 @@ import { FloatingActionButton } from './FloatingActionButton';
 
 interface LectioVeritatisProps {
   isDark: boolean;
-  onToggleTheme: () => void;
   hasProgress?: boolean;
   progressLabel?: string;
   verseOfDay?: { text: string; reference: string } | null;
@@ -18,11 +17,11 @@ interface LectioVeritatisProps {
   onExploreBooks?: () => void;
   onHome?: () => void;
   onSearch?: () => void;
+  onMarks?: () => void;
 }
 
 export const LectioVeritatis: React.FC<LectioVeritatisProps> = ({
   isDark,
-  onToggleTheme,
   hasProgress,
   progressLabel,
   verseOfDay,
@@ -30,6 +29,7 @@ export const LectioVeritatis: React.FC<LectioVeritatisProps> = ({
   onExploreBooks,
   onHome,
   onSearch,
+  onMarks,
 }) => {
   const { bgColor, textColor, subtextColor, mutedColor } = useTheme(isDark);
 
@@ -51,7 +51,7 @@ export const LectioVeritatis: React.FC<LectioVeritatisProps> = ({
         />
       </View>
 
-      <FloatingActionButton isDark={isDark} onHome={onHome} onBooks={onExploreBooks} onSearch={onSearch} />
+      <FloatingActionButton isDark={isDark} onHome={onHome} onBooks={onExploreBooks} onSearch={onSearch} onMarks={onMarks} />
     </View>
   );
 };
