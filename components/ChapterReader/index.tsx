@@ -1,8 +1,14 @@
-import { Animated, Dimensions, Text, View } from 'react-native';
+import { Animated, Dimensions, Share, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import * as ExpoSharing from 'expo-sharing';
+import ViewShot from 'react-native-view-shot';
 import { ChapterIntro } from './ChapterIntro';
 import { VerseBlock } from './VerseBlock';
+import { ShareImageTemplate } from './ShareImageTemplate';
+import { VerseSelectionToolbar } from './VerseSelectionToolbar';
 import { getChapter, type ChapterResponse } from '../../lib/api';
 import { saveReadingProgress } from '../../lib/readingProgress';
 import { FloatingActionButton } from '../LectioVeritatis/FloatingActionButton';
@@ -46,8 +52,10 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
 }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
+  const viewShotRef = useRef<ViewShot>(null);
   const [chapterData, setChapterData] = useState<ChapterResponse | null>(null);
   const [error, setError] = useState(false);
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
   const contentHeightRef = useRef(0);
   const viewportHeightRef = useRef(0);
   const onProgressChangeRef = useRef(onProgressChange);
@@ -104,6 +112,52 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
     }, 200);
   };
 
+  const handleVerseLongPress = (verseNumber: number) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setSelectedVerses((prev) => {
+      const next = new Set(prev);
+      if (next.has(verseNumber)) { next.delete(verseNumber); } else { next.add(verseNumber); }
+      return next;
+    });
+  };
+
+  const handleVersePress = (verseNumber: number) => {
+    setSelectedVerses((prev) => {
+      const next = new Set(prev);
+      if (next.has(verseNumber)) { next.delete(verseNumber); } else { next.add(verseNumber); }
+      return next;
+    });
+  };
+
+  const getSelectedVersesData = () => {
+    if (!chapterData) return [];
+    return chapterData.verses
+      .filter((v) => selectedVerses.has(v.number))
+      .sort((a, b) => a.number - b.number);
+  };
+
+  const handleCopy = async () => {
+    const verses = getSelectedVersesData();
+    const bookName = chapterData?.book.name ?? '';
+    const text = verses.map((v) => `${v.number} ${v.text}`).join(' ');
+    const ref = verses.length > 0 ? `${bookName} ${chapter}:${verses[0].number}${verses.length > 1 ? `–${verses[verses.length - 1].number}` : ''}` : '';
+    await Clipboard.setStringAsync(`${text}\n\n— ${ref}`);
+    setSelectedVerses(new Set());
+  };
+
+  const handleShare = async () => {
+    try {
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) return;
+      if (await ExpoSharing.isAvailableAsync()) {
+        await ExpoSharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir versículo' });
+      } else {
+        await Share.share({ url: uri });
+      }
+    } catch {}
+    setSelectedVerses(new Set());
+  };
+
   const persistProgress = (scrollPercent: number) => {
     if (!chapterData) return;
     const progress = { bookSlug, bookName: chapterData.book.name, chapter, scrollPercent, verseCount: chapterData.verses.length };
@@ -158,22 +212,61 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
               bookName={bookName}
               chapter={chapter}
               testamentLabel={testamentLabel}
-              highlightVerse={targetVerse}
+              highlightVerse={selectedVerses.size === 0 ? targetVerse : undefined}
+              selectedVerses={selectedVerses}
               onVerseRef={handleVerseRef}
+              onVerseLongPress={handleVerseLongPress}
+              onVersePress={handleVersePress}
             />
           ))}
         </Animated.View>
       </Animated.ScrollView>
 
       <ChapterIntro isDark={isDark} scrollY={scrollY} bookName={bookName || 'Cargando'} chapter={chapter} testamentLabel={testamentLabel || 'Biblia'} />
-      <FloatingActionButton
-        isDark={isDark}
-        isReader
-        onHome={onHome}
-        onBooks={onBooks}
-        onChapters={onChapters}
-        onVerses={onVerses}
-      />
+
+      {/* Hidden share image capture */}
+      {selectedVerses.size > 0 && chapterData && (() => {
+        const verses = getSelectedVersesData();
+        const rangeStart = verses[0]?.number ?? 1;
+        const rangeEnd = verses[verses.length - 1]?.number ?? 1;
+        return (
+          <ViewShot
+            ref={viewShotRef}
+            options={{ format: 'png', quality: 1 }}
+            style={{ position: 'absolute', top: -9999, left: -9999, opacity: 0 }}
+          >
+            <ShareImageTemplate
+              isDark={isDark}
+              bookName={chapterData.book.name}
+              chapter={chapter}
+              verses={verses}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+            />
+          </ViewShot>
+        );
+      })()}
+
+      {selectedVerses.size > 0 && (
+        <VerseSelectionToolbar
+          isDark={isDark}
+          selectedCount={selectedVerses.size}
+          onCopy={handleCopy}
+          onShare={handleShare}
+          onClear={() => setSelectedVerses(new Set())}
+        />
+      )}
+
+      {selectedVerses.size === 0 && (
+        <FloatingActionButton
+          isDark={isDark}
+          isReader
+          onHome={onHome}
+          onBooks={onBooks}
+          onChapters={onChapters}
+          onVerses={onVerses}
+        />
+      )}
     </View>
   );
 };
