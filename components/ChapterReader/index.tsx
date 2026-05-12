@@ -13,6 +13,7 @@ interface ChapterReaderProps {
   chapter: number;
   appBarHeight?: number;
   initialScrollPercent?: number;
+  targetVerse?: number;
   onProgressChange?: (progress: { bookSlug: string; bookName: string; chapter: number; scrollPercent: number; verseCount?: number }) => void;
   onHome?: () => void;
   onBooks?: () => void;
@@ -36,6 +37,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   chapter,
   appBarHeight,
   initialScrollPercent,
+  targetVerse,
   onProgressChange,
   onHome,
   onBooks,
@@ -49,6 +51,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   const contentHeightRef = useRef(0);
   const viewportHeightRef = useRef(0);
   const onProgressChangeRef = useRef(onProgressChange);
+  const scrolledToVerseRef = useRef(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => { onProgressChangeRef.current = onProgressChange; }, [onProgressChange]);
@@ -84,6 +87,22 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
       scrollRef.current?.scrollTo?.({ y: maxScroll * initialScrollPercent, animated: false });
     });
   }, [chapterData, initialScrollPercent]);
+
+  useEffect(() => {
+    scrolledToVerseRef.current = false;
+  }, [bookSlug, chapter, targetVerse]);
+
+  const handleVerseRef = (verseNumber: number, ref: any) => {
+    if (!ref || !targetVerse || verseNumber !== targetVerse || scrolledToVerseRef.current) return;
+    scrolledToVerseRef.current = true;
+    setTimeout(() => {
+      ref.measureInWindow((_x: number, screenY: number) => {
+        const currentScrollY = (scrollY as any).__getValue?.() ?? 0;
+        const absoluteY = currentScrollY + screenY - (appBarHeight ?? insets.top + 60) - 24;
+        scrollRef.current?.scrollTo?.({ y: absoluteY, animated: true });
+      });
+    }, 200);
+  };
 
   const persistProgress = (scrollPercent: number) => {
     if (!chapterData) return;
@@ -139,6 +158,8 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
               bookName={bookName}
               chapter={chapter}
               testamentLabel={testamentLabel}
+              highlightVerse={targetVerse}
+              onVerseRef={handleVerseRef}
             />
           ))}
         </Animated.View>

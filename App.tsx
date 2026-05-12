@@ -49,6 +49,7 @@ export default function App() {
   const [selectedBookSlug, setSelectedBookSlug] = useState('genesis');
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [initialScrollPercent, setInitialScrollPercent] = useState(0);
+  const [targetVerse, setTargetVerse] = useState<number | undefined>(undefined);
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; reference: string } | null>(null);
   const [appBarHeight, setAppBarHeight] = useState(0);
@@ -149,10 +150,11 @@ export default function App() {
   };
 
   const toggleTheme = () => setIsDark((current) => !current);
-  const openReader = (bookSlug: string, chapter: number, scrollPercent = 0) => {
+  const openReader = (bookSlug: string, chapter: number, scrollPercent = 0, verse?: number) => {
     setCurrentBookSlug(bookSlug);
     setCurrentChapter(chapter);
-    setInitialScrollPercent(scrollPercent);
+    setInitialScrollPercent(verse ? 0 : scrollPercent);
+    setTargetVerse(verse);
     navigateTo('reader');
   };
   const openChapters = (bookSlug: string) => {
@@ -280,6 +282,7 @@ export default function App() {
             chapter={currentChapter}
             appBarHeight={appBarHeight}
             initialScrollPercent={initialScrollPercent}
+            targetVerse={targetVerse}
             onProgressChange={(progress) => {
               setReadingProgress({ ...progress, updatedAt: Date.now() });
               setCurrentVerseCount(progress.verseCount ?? 0);
@@ -353,10 +356,7 @@ export default function App() {
             count={currentVerseCount}
             isDark={isDark}
             onSelect={(verse) => {
-              const percent = verse > 1 ? (verse - 1) / currentVerseCount : 0;
-              setCurrentBookSlug(selectedBookSlug);
-              setCurrentChapter(selectedChapter);
-              openReader(selectedBookSlug, selectedChapter, percent);
+              openReader(selectedBookSlug, selectedChapter, 0, verse);
             }}
             onBack={goBack}
             appBarHeight={appBarHeight}

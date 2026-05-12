@@ -11,6 +11,8 @@ interface VerseBlockProps {
   bookName: string;
   chapter: number;
   testamentLabel: string;
+  highlightVerse?: number;
+  onVerseRef?: (verseNumber: number, ref: View | null) => void;
 }
 
 const OrnamentDivider: React.FC<{ gold: string }> = ({ gold }) => (
@@ -21,7 +23,7 @@ const OrnamentDivider: React.FC<{ gold: string }> = ({ gold }) => (
   </View>
 );
 
-export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName, chapter, testamentLabel }) => {
+export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName, chapter, testamentLabel, highlightVerse, onVerseRef }) => {
   const textColor = isDark ? 'rgba(201,196,184,0.78)' : 'rgba(61,54,41,0.82)';
   const gold = isDark ? '#c5a059' : '#775a19';
   const mutedGold = isDark ? 'rgba(197,160,89,0.55)' : 'rgba(119,90,25,0.55)';
@@ -101,42 +103,59 @@ export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName
       <OrnamentDivider gold={gold} />
 
       {/* Verse text with true editorial superscript numbers */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {verses.map((verse) => (
-          <View
-            key={verse.number}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-            }}
-          >
-            {/* Superscript verse number */}
-            <Text
+      <View style={{ flexDirection: 'column' }}>
+        {verses.map((verse) => {
+          const isHighlighted = verse.number === highlightVerse;
+          return (
+            <View
+              key={verse.number}
+              ref={(ref) => onVerseRef?.(verse.number, ref)}
               style={{
-                color: gold,
-                fontFamily: 'Inter-Medium',
-                fontSize: 11,
-                lineHeight: 14,
-                marginTop: 2,
-                opacity: 0.82,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                flexWrap: 'wrap',
+                backgroundColor: isHighlighted
+                  ? (isDark ? 'rgba(197,160,89,0.12)' : 'rgba(119,90,25,0.08)')
+                  : 'transparent',
+                borderLeftWidth: isHighlighted ? 2 : 0,
+                borderLeftColor: gold,
+                paddingLeft: isHighlighted ? 10 : 0,
+                paddingVertical: isHighlighted ? 6 : 0,
+                marginLeft: isHighlighted ? -12 : 0,
+                borderRadius: isHighlighted ? 4 : 0,
               }}
             >
-              {verse.number}
-            </Text>
-            {/* Thin space + verse text */}
-            <Text
-              style={{
-                color: textColor,
-                fontFamily: 'PlayfairDisplay',
-                fontSize: 22,
-                lineHeight: 30,
-                letterSpacing: 0.06,
-              }}
-            >
-              {'\u2009'}{verse.text}{' '}
-            </Text>
-          </View>
-        ))}
+              {/* Superscript verse number */}
+              <Text
+                style={{
+                  color: isHighlighted ? gold : gold,
+                  fontFamily: 'Inter-Medium',
+                  fontSize: 11,
+                  lineHeight: 14,
+                  marginTop: 2,
+                  opacity: isHighlighted ? 1 : 0.82,
+                }}
+              >
+                {verse.number}
+              </Text>
+              {/* Thin space + verse text */}
+              <Text
+                style={{
+                  color: isHighlighted
+                    ? (isDark ? 'rgba(201,196,184,0.96)' : 'rgba(61,54,41,0.96)')
+                    : textColor,
+                  fontFamily: isHighlighted ? 'PlayfairDisplay-Bold' : 'PlayfairDisplay',
+                  fontSize: 22,
+                  lineHeight: 30,
+                  letterSpacing: 0.06,
+                  flexShrink: 1,
+                }}
+              >
+                {'\u2009'}{verse.text}{' '}
+              </Text>
+            </View>
+          );
+        })}
       </View>
 
       {/* Bottom ornament divider */}
