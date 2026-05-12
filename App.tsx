@@ -1,27 +1,257 @@
-
-import { ScreenContent } from 'components/ScreenContent';
+import './global.css';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import { useEffect, useRef, useState } from 'react';
+import { AppBar } from 'components/AppBar';
+import { BooksIndex } from 'components/BooksIndex';
+import { ChapterReader } from 'components/ChapterReader';
+import { LectioVeritatis } from 'components/LectioVeritatis';
+import { Animated, Easing, Platform, View, Text, useColorScheme } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
+import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
+import { readReadingProgress, type ReadingProgress } from './lib/readingProgress';
+import { getRandomVerse } from './data/bibleVerses';
 
+import {
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+} from '@expo-google-fonts/inter';
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
 
-
-
-  import './global.css';
-  import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-
-
+const paperTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#c9a84c',
+    secondary: '#d4cfc5',
+    surface: '#080808',
+    onSurface: '#ece7db',
+  },
+};
 
 export default function App() {
+  const colorScheme = useColorScheme();
+  const [screen, setScreen] = useState<'home' | 'books' | 'reader'>('home');
+  const [isDark, setIsDark] = useState(colorScheme === 'dark');
+  const [currentBookSlug, setCurrentBookSlug] = useState('genesis');
+  const [currentChapter, setCurrentChapter] = useState(1);
+  const [initialScrollPercent, setInitialScrollPercent] = useState(0);
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
+  const [verseOfDay, setVerseOfDay] = useState<{ text: string; reference: string } | null>(null);
+  const homeProgress = useRef(new Animated.Value(1)).current;
+  const booksProgress = useRef(new Animated.Value(0)).current;
+  const readerProgress = useRef(new Animated.Value(0)).current;
+  const [fontsLoaded] = useFonts({
+    'Inter': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-Light': Inter_300Light,
+    'PlayfairDisplay': PlayfairDisplay_400Regular,
+    'PlayfairDisplay-Italic': PlayfairDisplay_400Regular_Italic,
+    'PlayfairDisplay-Bold': PlayfairDisplay_700Bold,
+  });
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setButtonStyleAsync('light');
+      NavigationBar.setVisibilityAsync('hidden');
+    }
+  }, []);
+
+  useEffect(() => {
+    readReadingProgress().then((progress) => {
+      if (progress) setReadingProgress(progress);
+    });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    getRandomVerse()
+      .then((verse) => {
+        if (!active) return;
+        setVerseOfDay(verse);
+      })
+      .catch(() => {
+        if (active) setVerseOfDay(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const navigateTo = (nextScreen: 'home' | 'books' | 'reader') => {
+    if (nextScreen === screen) {
+      return;
+    }
+
+    setScreen(nextScreen);
+
+    const duration = isDark ? 620 : 500;
+    const easing = isDark ? Easing.out(Easing.cubic) : Easing.bezier(0.22, 1, 0.36, 1);
+
+    Animated.parallel([
+      Animated.timing(homeProgress, {
+        toValue: nextScreen === 'home' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(booksProgress, {
+        toValue: nextScreen === 'books' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(readerProgress, {
+        toValue: nextScreen === 'reader' ? 1 : 0,
+        duration: nextScreen === 'reader' ? duration + 120 : duration,
+        easing,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const toggleTheme = () => setIsDark((current) => !current);
+  const openReader = (bookSlug: string, chapter: number, scrollPercent = 0) => {
+    setCurrentBookSlug(bookSlug);
+    setCurrentChapter(chapter);
+    setInitialScrollPercent(scrollPercent);
+    navigateTo('reader');
+  };
+  const handleStartReading = () => {
+    if (readingProgress) {
+      openReader(readingProgress.bookSlug, readingProgress.chapter, readingProgress.scrollPercent);
+      return;
+    }
+    openReader('genesis', 1, 0);
+  };
+  const progressLabel = readingProgress ? `${readingProgress.bookName} · Capítulo ${readingProgress.chapter}` : undefined;
+  const backgroundColor = isDark ? '#050505' : '#efe6d4';
+  const homeExitY = isDark ? -18 : -30;
+  const booksEnterY = isDark ? 22 : 36;
+  const hiddenScale = isDark ? 0.992 : 0.984;
+
+  if (!fontsLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background-light">
+        <Text className="text-primary font-sans">Cargando...</Text>
+      </View>
+    );
+  }
+
   return (
-    
-    <SafeAreaProvider>
-    
-      <ScreenContent title="Home" path="App.tsx">
-      
-      </ScreenContent>
-      <StatusBar style="auto" />
-    
-    </SafeAreaProvider>
-    
+    <PaperProvider theme={paperTheme}>
+      <SafeAreaProvider style={{ backgroundColor }}>
+        <Animated.View
+          pointerEvents={screen === 'home' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            opacity: homeProgress,
+            transform: [
+              {
+                translateY: homeProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [homeExitY, 0],
+                }),
+              },
+              {
+                scale: homeProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <LectioVeritatis
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
+            hasProgress={Boolean(readingProgress)}
+            progressLabel={progressLabel}
+            verseOfDay={verseOfDay}
+            onStartReading={handleStartReading}
+            onExploreBooks={() => navigateTo('books')}
+            onHome={() => navigateTo('home')}
+            onSearch={() => {}}
+          />
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents={screen === 'books' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            opacity: booksProgress,
+            transform: [
+              {
+                translateY: booksProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [booksEnterY, 0],
+                }),
+              },
+              {
+                scale: booksProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <BooksIndex
+            isDark={isDark}
+            activeBookSlug={currentBookSlug}
+            onClose={() => navigateTo('home')}
+            onBookPress={(bookSlug) => openReader(bookSlug, 1, 0)}
+            onHome={() => navigateTo('home')}
+            onSearch={() => {}}
+          />
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents={screen === 'reader' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            opacity: readerProgress,
+            transform: [
+              {
+                translateY: readerProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [isDark ? 18 : 28, 0],
+                }),
+              },
+              {
+                scale: readerProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [isDark ? 0.994 : 0.986, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <ChapterReader
+            isDark={isDark}
+            bookSlug={currentBookSlug}
+            chapter={currentChapter}
+            initialScrollPercent={initialScrollPercent}
+            onProgressChange={(progress) => setReadingProgress({ ...progress, updatedAt: Date.now() })}
+            onHome={() => navigateTo('home')}
+            onBooks={() => navigateTo('books')}
+          />
+        </Animated.View>
+        <AppBar
+          screen={screen}
+          isDark={isDark}
+          onBack={() => navigateTo('home')}
+          onToggleTheme={toggleTheme}
+          progress={screen === 'home' ? homeProgress : screen === 'books' ? booksProgress : readerProgress}
+        />
+        <StatusBar hidden />
+      </SafeAreaProvider>
+    </PaperProvider>
   );
 }
