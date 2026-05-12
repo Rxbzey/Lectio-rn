@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Lectio Veritatis",
-    "slug": "lectio-veritatis",
+    "slug": "my-expo-app",
     "version": "1.0.0",
     "web": {
       "bundler": "metro",
@@ -29,7 +29,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.kaes.lectioveritatis"
     },
     "extra": {
       "eas": {

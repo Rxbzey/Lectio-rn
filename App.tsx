@@ -10,8 +10,9 @@ import { LectioVeritatis } from 'components/LectioVeritatis';
 import { SearchScreen } from 'components/SearchScreen';
 import { NumberGridScreen } from 'components/NumberGridScreen';
 import { MarksScreen } from 'components/MarksScreen';
+import { SplashScreen } from 'components/SplashScreen';
 import { BOOKS_META, slugifyBookName } from './data/biblia/books-meta';
-import { Animated, Easing, Platform, View, Text, useColorScheme } from 'react-native';
+import { Animated, Easing, Platform, useColorScheme } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import { readReadingProgress, type ReadingProgress } from './lib/readingProgress';
@@ -194,11 +195,7 @@ export default function App() {
   const hiddenScale = isDark ? 0.992 : 0.984;
 
   if (!fontsLoaded) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background-light">
-        <Text className="text-primary font-sans">Cargando...</Text>
-      </View>
-    );
+    return <SplashScreen isDark={isDark} />;
   }
 
   return (
@@ -457,3 +454,4 @@ export default function App() {
     </PaperProvider>
   );
 }
+

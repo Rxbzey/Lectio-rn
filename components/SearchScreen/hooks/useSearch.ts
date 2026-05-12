@@ -19,10 +19,6 @@ export function useSearch(): UseSearchReturn {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  useEffect(() => {
-    const id = setTimeout(() => inputRef.current?.focus(), 400);
-    return () => clearTimeout(id);
-  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
