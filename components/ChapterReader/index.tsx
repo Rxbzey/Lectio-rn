@@ -11,10 +11,13 @@ interface ChapterReaderProps {
   isDark: boolean;
   bookSlug: string;
   chapter: number;
+  appBarHeight?: number;
   initialScrollPercent?: number;
-  onProgressChange?: (progress: { bookSlug: string; bookName: string; chapter: number; scrollPercent: number }) => void;
+  onProgressChange?: (progress: { bookSlug: string; bookName: string; chapter: number; scrollPercent: number; verseCount?: number }) => void;
   onHome?: () => void;
   onBooks?: () => void;
+  onChapters?: () => void;
+  onVerses?: () => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -31,10 +34,13 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   isDark,
   bookSlug,
   chapter,
+  appBarHeight,
   initialScrollPercent,
   onProgressChange,
   onHome,
   onBooks,
+  onChapters,
+  onVerses,
 }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
@@ -59,7 +65,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
       .then((data) => {
         if (!active) return;
         setChapterData(data);
-        const progress = { bookSlug, bookName: data.book.name, chapter, scrollPercent: initialScrollPercent ?? 0 };
+        const progress = { bookSlug, bookName: data.book.name, chapter, scrollPercent: initialScrollPercent ?? 0, verseCount: data.verses.length };
         onProgressChangeRef.current?.(progress);
         void saveReadingProgress({ ...progress, updatedAt: Date.now() });
       })
@@ -81,7 +87,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
 
   const persistProgress = (scrollPercent: number) => {
     if (!chapterData) return;
-    const progress = { bookSlug, bookName: chapterData.book.name, chapter, scrollPercent };
+    const progress = { bookSlug, bookName: chapterData.book.name, chapter, scrollPercent, verseCount: chapterData.verses.length };
     onProgressChange?.(progress);
     void saveReadingProgress({ ...progress, updatedAt: Date.now() });
   };
@@ -103,7 +109,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
       <Animated.ScrollView
         ref={scrollRef}
         className="flex-1"
-        contentContainerStyle={{ paddingTop: screenHeight, paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingTop: screenHeight + (appBarHeight || insets.top + 60), paddingBottom: insets.bottom + 120 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onLayout={(event) => {
@@ -144,6 +150,8 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
         isReader
         onHome={onHome}
         onBooks={onBooks}
+        onChapters={onChapters}
+        onVerses={onVerses}
       />
     </View>
   );

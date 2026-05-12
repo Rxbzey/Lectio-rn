@@ -8,12 +8,13 @@ interface AppBarProps {
   onBack: () => void;
   onToggleTheme: () => void;
   progress: Animated.Value;
+  onHeightMeasured?: (height: number) => void;
 }
 
-export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggleTheme, progress }) => {
+export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggleTheme, progress, onHeightMeasured }) => {
   const insets = useSafeAreaInsets();
   const gold = isDark ? '#c5a059' : '#775a19';
-  const iconColor = isDark ? '#d4cfc5' : '#0a0a08';
+  const iconColor = isDark ? '#d4cfc5' : '#3d3629';
   const bg = isDark ? 'rgba(5,5,5,0.72)' : 'rgba(239,230,212,0.72)';
   const border = isDark ? 'rgba(197,160,89,0.14)' : 'rgba(119,90,25,0.14)';
   const isHome = screen === 'home';
@@ -31,6 +32,7 @@ export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggle
       }}
     >
       <View
+        onLayout={(e) => onHeightMeasured?.(e.nativeEvent.layout.height)}
         style={{
           paddingTop: insets.top,
           backgroundColor: isHome ? 'transparent' : bg,

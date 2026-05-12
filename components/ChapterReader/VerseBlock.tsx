@@ -22,7 +22,7 @@ const OrnamentDivider: React.FC<{ gold: string }> = ({ gold }) => (
 );
 
 export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName, chapter, testamentLabel }) => {
-  const textColor = isDark ? 'rgba(226,226,226,0.86)' : 'rgba(23,18,11,0.84)';
+  const textColor = isDark ? 'rgba(201,196,184,0.78)' : 'rgba(61,54,41,0.82)';
   const gold = isDark ? '#c5a059' : '#775a19';
   const mutedGold = isDark ? 'rgba(197,160,89,0.55)' : 'rgba(119,90,25,0.55)';
   const rangeStart = verses[0].number;
@@ -100,42 +100,44 @@ export const VerseBlock: React.FC<VerseBlockProps> = ({ verses, isDark, bookName
       {/* Top ornament divider */}
       <OrnamentDivider gold={gold} />
 
-      {/* Verse text with inline superscript numbers */}
-      <Text
-        style={{
-          color: textColor,
-          fontFamily: 'PlayfairDisplay',
-          fontSize: 22,
-          lineHeight: 30,
-          letterSpacing: 0.06,
-          textAlign: 'left',
-        }}
-      >
-        {verses.map((verse, index) => (
-          <Text key={verse.number}>
-            {index > 0 ? ' ' : ''}
+      {/* Verse text with true editorial superscript numbers */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {verses.map((verse) => (
+          <View
+            key={verse.number}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+            }}
+          >
+            {/* Superscript verse number */}
             <Text
               style={{
                 color: gold,
                 fontFamily: 'Inter-Medium',
-                fontSize: 10,
-                opacity: 0.72,
+                fontSize: 11,
+                lineHeight: 14,
+                marginTop: 2,
+                opacity: 0.82,
               }}
             >
               {verse.number}
             </Text>
+            {/* Thin space + verse text */}
             <Text
               style={{
                 color: textColor,
                 fontFamily: 'PlayfairDisplay',
                 fontSize: 22,
+                lineHeight: 30,
+                letterSpacing: 0.06,
               }}
             >
-              {'\u00A0'}{verse.text}
+              {'\u2009'}{verse.text}{' '}
             </Text>
-          </Text>
+          </View>
         ))}
-      </Text>
+      </View>
 
       {/* Bottom ornament divider */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 36 }}>

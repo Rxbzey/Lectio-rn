@@ -15,7 +15,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ isDark, onToggle }) =>
       <MaterialIcons
         name={isDark ? 'light-mode' : 'dark-mode'}
         size={20}
-        color={isDark ? '#d4cfc5' : '#0a0a08'}
+        color={isDark ? '#d4cfc5' : '#3d3629'}
       />
     </Pressable>
   );

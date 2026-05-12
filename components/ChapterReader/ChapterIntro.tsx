@@ -33,8 +33,8 @@ export const ChapterIntro: React.FC<ChapterIntroProps> = ({ isDark, scrollY, boo
     extrapolate: 'clamp',
   });
 
-  const foreground = isDark ? '#f1eadf' : '#17120b';
-  const muted = isDark ? 'rgba(226,226,226,0.28)' : 'rgba(23,18,11,0.38)';
+  const foreground = isDark ? '#c9c4b8' : '#3d3629';
+  const muted = isDark ? 'rgba(201,196,184,0.24)' : 'rgba(61,54,41,0.34)';
 
   return (
     <Animated.View

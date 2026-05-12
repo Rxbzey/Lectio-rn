@@ -1,5 +1,4 @@
-import { View, Text, Pressable } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text } from 'react-native';
 
 interface BooksHeaderProps {
   titleColor: string;
@@ -18,9 +17,6 @@ export const BooksHeader: React.FC<BooksHeaderProps> = ({ titleColor, mutedColor
           Escrituras
         </Text>
       </View>
-      <Pressable className="p-2" onPress={onClose}>
-        <MaterialIcons name="close" size={32} color="#9a8f80" />
-      </Pressable>
     </View>
   );
 };

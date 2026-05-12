@@ -7,6 +7,8 @@ import { AppBar } from 'components/AppBar';
 import { BooksIndex } from 'components/BooksIndex';
 import { ChapterReader } from 'components/ChapterReader';
 import { LectioVeritatis } from 'components/LectioVeritatis';
+import { NumberGridScreen } from 'components/NumberGridScreen';
+import { BOOKS_META, slugifyBookName } from './data/biblia/books-meta';
 import { Animated, Easing, Platform, View, Text, useColorScheme } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
@@ -37,16 +39,67 @@ const paperTheme = {
 
 export default function App() {
   const colorScheme = useColorScheme();
-  const [screen, setScreen] = useState<'home' | 'books' | 'reader'>('home');
+  const [screen, setScreen] = useState<'home' | 'books' | 'chapters' | 'verses' | 'reader'>('home');
   const [isDark, setIsDark] = useState(colorScheme === 'dark');
   const [currentBookSlug, setCurrentBookSlug] = useState('genesis');
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [selectedBookSlug, setSelectedBookSlug] = useState('genesis');
+  const [selectedChapter, setSelectedChapter] = useState(1);
   const [initialScrollPercent, setInitialScrollPercent] = useState(0);
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; reference: string } | null>(null);
+  const [appBarHeight, setAppBarHeight] = useState(0);
+  const [currentVerseCount, setCurrentVerseCount] = useState(0);
   const homeProgress = useRef(new Animated.Value(1)).current;
   const booksProgress = useRef(new Animated.Value(0)).current;
+  const chaptersProgress = useRef(new Animated.Value(0)).current;
+  const versesProgress = useRef(new Animated.Value(0)).current;
   const readerProgress = useRef(new Animated.Value(0)).current;
+
+  const getBookMeta = (slug: string) => BOOKS_META.find((b) => slugifyBookName(b.name) === slug);
+  const selectedBookMeta = getBookMeta(selectedBookSlug);
+  const chapterCount = selectedBookMeta?.chapters ?? 0;
+
+  const navigateTo = (nextScreen: 'home' | 'books' | 'chapters' | 'verses' | 'reader') => {
+    if (nextScreen === screen) return;
+    setScreen(nextScreen);
+
+    const duration = isDark ? 620 : 500;
+    const easing = isDark ? Easing.out(Easing.cubic) : Easing.bezier(0.22, 1, 0.36, 1);
+
+    Animated.parallel([
+      Animated.timing(homeProgress, {
+        toValue: nextScreen === 'home' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(booksProgress, {
+        toValue: nextScreen === 'books' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(chaptersProgress, {
+        toValue: nextScreen === 'chapters' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(versesProgress, {
+        toValue: nextScreen === 'verses' ? 1 : 0,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(readerProgress, {
+        toValue: nextScreen === 'reader' ? 1 : 0,
+        duration: nextScreen === 'reader' ? duration + 120 : duration,
+        easing,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
   const [fontsLoaded] = useFonts({
     'Inter': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
@@ -84,37 +137,6 @@ export default function App() {
     };
   }, []);
 
-  const navigateTo = (nextScreen: 'home' | 'books' | 'reader') => {
-    if (nextScreen === screen) {
-      return;
-    }
-
-    setScreen(nextScreen);
-
-    const duration = isDark ? 620 : 500;
-    const easing = isDark ? Easing.out(Easing.cubic) : Easing.bezier(0.22, 1, 0.36, 1);
-
-    Animated.parallel([
-      Animated.timing(homeProgress, {
-        toValue: nextScreen === 'home' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(booksProgress, {
-        toValue: nextScreen === 'books' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(readerProgress, {
-        toValue: nextScreen === 'reader' ? 1 : 0,
-        duration: nextScreen === 'reader' ? duration + 120 : duration,
-        easing,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
 
   const toggleTheme = () => setIsDark((current) => !current);
   const openReader = (bookSlug: string, chapter: number, scrollPercent = 0) => {
@@ -122,6 +144,14 @@ export default function App() {
     setCurrentChapter(chapter);
     setInitialScrollPercent(scrollPercent);
     navigateTo('reader');
+  };
+  const openChapters = (bookSlug: string) => {
+    setSelectedBookSlug(bookSlug);
+    navigateTo('chapters');
+  };
+  const openVerses = (chapter: number) => {
+    setSelectedChapter(chapter);
+    navigateTo('verses');
   };
   const handleStartReading = () => {
     if (readingProgress) {
@@ -205,8 +235,9 @@ export default function App() {
           <BooksIndex
             isDark={isDark}
             activeBookSlug={currentBookSlug}
+            appBarHeight={appBarHeight}
             onClose={() => navigateTo('home')}
-            onBookPress={(bookSlug) => openReader(bookSlug, 1, 0)}
+            onBookPress={(bookSlug) => openChapters(bookSlug)}
             onHome={() => navigateTo('home')}
             onSearch={() => {}}
           />
@@ -237,18 +268,113 @@ export default function App() {
             isDark={isDark}
             bookSlug={currentBookSlug}
             chapter={currentChapter}
+            appBarHeight={appBarHeight}
             initialScrollPercent={initialScrollPercent}
-            onProgressChange={(progress) => setReadingProgress({ ...progress, updatedAt: Date.now() })}
+            onProgressChange={(progress) => {
+              setReadingProgress({ ...progress, updatedAt: Date.now() });
+              setCurrentVerseCount(progress.verseCount ?? 0);
+            }}
             onHome={() => navigateTo('home')}
             onBooks={() => navigateTo('books')}
+            onChapters={() => openChapters(currentBookSlug)}
+            onVerses={() => openVerses(currentChapter)}
           />
         </Animated.View>
+        <Animated.View
+          pointerEvents={screen === 'chapters' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            zIndex: screen === 'chapters' ? 15 : 0,
+            opacity: chaptersProgress,
+            transform: [
+              {
+                translateY: chaptersProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [booksEnterY, 0],
+                }),
+              },
+              {
+                scale: chaptersProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <NumberGridScreen
+            title={selectedBookMeta?.name ?? ''}
+            subtitle="Selecciona capítulo"
+            count={chapterCount}
+            isDark={isDark}
+            selectedNumber={selectedChapter}
+            onSelect={(chapter) => openVerses(chapter)}
+            onBack={() => navigateTo('books')}
+            appBarHeight={appBarHeight}
+            progress={chaptersProgress}
+          />
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents={screen === 'verses' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            zIndex: screen === 'verses' ? 15 : 0,
+            opacity: versesProgress,
+            transform: [
+              {
+                translateY: versesProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [booksEnterY, 0],
+                }),
+              },
+              {
+                scale: versesProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <NumberGridScreen
+            title={`Capítulo ${selectedChapter}`}
+            subtitle="Selecciona versículo"
+            count={currentVerseCount}
+            isDark={isDark}
+            onSelect={(verse) => {
+              const percent = verse > 1 ? (verse - 1) / currentVerseCount : 0;
+              setCurrentBookSlug(selectedBookSlug);
+              setCurrentChapter(selectedChapter);
+              openReader(selectedBookSlug, selectedChapter, percent);
+            }}
+            onBack={() => navigateTo('chapters')}
+            appBarHeight={appBarHeight}
+            progress={versesProgress}
+          />
+        </Animated.View>
+
         <AppBar
-          screen={screen}
+          screen={screen === 'home' ? 'home' : screen === 'books' ? 'books' : 'reader'}
           isDark={isDark}
-          onBack={() => navigateTo('home')}
+          onBack={() => {
+            if (screen === 'chapters') navigateTo('books');
+            else if (screen === 'verses') navigateTo('chapters');
+            else navigateTo('home');
+          }}
           onToggleTheme={toggleTheme}
-          progress={screen === 'home' ? homeProgress : screen === 'books' ? booksProgress : readerProgress}
+          progress={
+            screen === 'home'
+              ? homeProgress
+              : screen === 'books'
+                ? booksProgress
+                : screen === 'chapters'
+                  ? chaptersProgress
+                  : screen === 'verses'
+                    ? versesProgress
+                    : readerProgress
+          }
+          onHeightMeasured={setAppBarHeight}
         />
         <StatusBar hidden />
       </SafeAreaProvider>

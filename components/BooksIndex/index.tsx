@@ -9,18 +9,19 @@ import { FloatingActionButton } from '../LectioVeritatis/FloatingActionButton';
 interface BooksIndexProps {
   isDark: boolean;
   activeBookSlug?: string;
+  appBarHeight?: number;
   onClose?: () => void;
   onBookPress?: (bookSlug: string) => void;
   onHome?: () => void;
   onSearch?: () => void;
 }
 
-export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, onClose, onBookPress, onHome, onSearch }) => {
+export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, appBarHeight, onClose, onBookPress, onHome, onSearch }) => {
   const insets = useSafeAreaInsets();
   const { bgColor, titleColor, bodyColor, outlineColor, mutedColor } = useBooksIndexTheme(isDark);
 
   return (
-    <View className={`flex-1 ${bgColor}`} style={{ paddingTop: insets.top }}>
+    <View className={`flex-1 ${bgColor}`} style={{ paddingTop: appBarHeight || insets.top + 60 }}>
       <BooksHeader titleColor={titleColor} mutedColor={mutedColor} onClose={onClose} />
       <ScrollView
         className="flex-1"

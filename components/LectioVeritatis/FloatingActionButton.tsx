@@ -26,7 +26,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     action?.();
   };
   const actionStyle = { backgroundColor: isDark ? '#080808' : '#f5f0e8' };
-  const labelStyle = { color: isDark ? '#ece7db' : '#0a0a08' };
+  const labelStyle = { color: isDark ? '#ece7db' : '#3d3629' };
 
   return (
     <FAB.Group
@@ -34,7 +34,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       visible
       icon={open ? 'close' : 'plus'}
       color="#c9a84c"
-      backdropColor="rgba(0,0,0,0.25)"
+      backdropColor="rgba(0,0,0,0.88)"
       fabStyle={{
         backgroundColor: isDark ? '#000000' : '#d4cfc5',
         borderRadius: 999,
