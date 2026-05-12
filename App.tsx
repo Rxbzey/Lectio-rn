@@ -40,7 +40,9 @@ const paperTheme = {
 
 export default function App() {
   const colorScheme = useColorScheme();
-  const [screen, setScreen] = useState<'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search'>('home');
+  type Screen = 'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search';
+  const [screen, setScreen] = useState<Screen>('home');
+  const screenStack = useRef<Screen[]>(['home']);
   const [isDark, setIsDark] = useState(colorScheme === 'dark');
   const [currentBookSlug, setCurrentBookSlug] = useState('genesis');
   const [currentChapter, setCurrentChapter] = useState(1);
@@ -62,51 +64,30 @@ export default function App() {
   const selectedBookMeta = getBookMeta(selectedBookSlug);
   const chapterCount = selectedBookMeta?.chapters ?? 0;
 
-  const navigateTo = (nextScreen: 'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search') => {
-    if (nextScreen === screen) return;
-    setScreen(nextScreen);
+  const progressMap: Record<Screen, Animated.Value> = {
+    home: homeProgress,
+    books: booksProgress,
+    chapters: chaptersProgress,
+    verses: versesProgress,
+    reader: readerProgress,
+    search: searchProgress,
+  };
 
+  const animateTransition = (from: Screen, to: Screen) => {
     const duration = isDark ? 620 : 500;
     const easing = isDark ? Easing.out(Easing.cubic) : Easing.bezier(0.22, 1, 0.36, 1);
-
     Animated.parallel([
-      Animated.timing(homeProgress, {
-        toValue: nextScreen === 'home' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(booksProgress, {
-        toValue: nextScreen === 'books' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(chaptersProgress, {
-        toValue: nextScreen === 'chapters' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(versesProgress, {
-        toValue: nextScreen === 'verses' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(readerProgress, {
-        toValue: nextScreen === 'reader' ? 1 : 0,
-        duration: nextScreen === 'reader' ? duration + 120 : duration,
-        easing,
-        useNativeDriver: true,
-      }),
-      Animated.timing(searchProgress, {
-        toValue: nextScreen === 'search' ? 1 : 0,
-        duration,
-        easing,
-        useNativeDriver: true,
-      }),
+      Animated.timing(progressMap[from], { toValue: 0, duration, easing, useNativeDriver: true }),
+      Animated.timing(progressMap[to], { toValue: 1, duration: to === 'reader' ? duration + 120 : duration, easing, useNativeDriver: true }),
     ]).start();
+  };
+
+  const navigateTo = (nextScreen: Screen) => {
+    if (nextScreen === screen) return;
+    const from = screen;
+    screenStack.current = [...screenStack.current, nextScreen];
+    setScreen(nextScreen);
+    animateTransition(from, nextScreen);
   };
   const [fontsLoaded] = useFonts({
     'Inter': Inter_400Regular,
@@ -144,6 +125,28 @@ export default function App() {
       active = false;
     };
   }, []);
+
+  const jumpTo = (target: Screen) => {
+    if (target === screen) return;
+    const from = screen;
+    const existing = screenStack.current.lastIndexOf(target);
+    screenStack.current = existing !== -1
+      ? screenStack.current.slice(0, existing + 1)
+      : ['home', target];
+    setScreen(target);
+    animateTransition(from, target);
+  };
+
+  const goBack = () => {
+    const stack = screenStack.current;
+    if (stack.length <= 1) return;
+    const from = stack[stack.length - 1];
+    const newStack = stack.slice(0, -1);
+    screenStack.current = newStack;
+    const prev = newStack[newStack.length - 1];
+    setScreen(prev);
+    animateTransition(from, prev);
+  };
 
   const toggleTheme = () => setIsDark((current) => !current);
   const openReader = (bookSlug: string, chapter: number, scrollPercent = 0) => {
@@ -213,8 +216,8 @@ export default function App() {
             verseOfDay={verseOfDay}
             onStartReading={handleStartReading}
             onExploreBooks={() => navigateTo('books')}
-            onHome={() => navigateTo('home')}
-            onSearch={() => navigateTo('search')}
+            onHome={() => jumpTo('home')}
+            onSearch={() => jumpTo('search')}
           />
         </Animated.View>
 
@@ -243,10 +246,10 @@ export default function App() {
             isDark={isDark}
             activeBookSlug={currentBookSlug}
             appBarHeight={appBarHeight}
-            onClose={() => navigateTo('home')}
+            onClose={goBack}
             onBookPress={(bookSlug) => openChapters(bookSlug)}
-            onHome={() => navigateTo('home')}
-            onSearch={() => navigateTo('search')}
+            onHome={() => jumpTo('home')}
+            onSearch={() => jumpTo('search')}
           />
         </Animated.View>
 
@@ -281,8 +284,8 @@ export default function App() {
               setReadingProgress({ ...progress, updatedAt: Date.now() });
               setCurrentVerseCount(progress.verseCount ?? 0);
             }}
-            onHome={() => navigateTo('home')}
-            onBooks={() => navigateTo('books')}
+            onHome={() => jumpTo('home')}
+            onBooks={() => jumpTo('books')}
             onChapters={() => openChapters(currentBookSlug)}
             onVerses={() => openVerses(currentChapter)}
           />
@@ -316,7 +319,7 @@ export default function App() {
             isDark={isDark}
             selectedNumber={selectedChapter}
             onSelect={(chapter) => openVerses(chapter)}
-            onBack={() => navigateTo('books')}
+            onBack={goBack}
             appBarHeight={appBarHeight}
             progress={chaptersProgress}
           />
@@ -355,7 +358,7 @@ export default function App() {
               setCurrentChapter(selectedChapter);
               openReader(selectedBookSlug, selectedChapter, percent);
             }}
-            onBack={() => navigateTo('chapters')}
+            onBack={goBack}
             appBarHeight={appBarHeight}
             progress={versesProgress}
           />
@@ -391,11 +394,7 @@ export default function App() {
         <AppBar
           screen={screen === 'home' ? 'home' : 'reader'}
           isDark={isDark}
-          onBack={() => {
-            if (screen === 'chapters') navigateTo('books');
-            else if (screen === 'verses') navigateTo('chapters');
-            else navigateTo('home');
-          }}
+          onBack={goBack}
           onToggleTheme={toggleTheme}
           onHeightMeasured={setAppBarHeight}
         />

@@ -38,7 +38,7 @@ export const LectioVeritatis: React.FC<LectioVeritatisProps> = ({
   return (
     <View className={`flex-1 ${bgColor} ${textColor}`} style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
       {/* Main Content */}
-      <View className="flex-1 items-center justify-center px-8 relative">
+      <View className="flex-1 items-center justify-center px-8 relative pb-20">
         <CrossBackground isDark={isDark} />
         <Header />
         <Title isDark={isDark} />
