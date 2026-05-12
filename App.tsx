@@ -397,19 +397,6 @@ export default function App() {
             else navigateTo('home');
           }}
           onToggleTheme={toggleTheme}
-          progress={
-            screen === 'home'
-              ? homeProgress
-              : screen === 'books'
-                ? booksProgress
-                : screen === 'chapters'
-                  ? chaptersProgress
-                  : screen === 'verses'
-                    ? versesProgress
-                    : screen === 'search'
-                      ? searchProgress
-                      : readerProgress
-          }
           onHeightMeasured={setAppBarHeight}
         />
         <StatusBar hidden />

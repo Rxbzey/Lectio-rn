@@ -34,7 +34,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       visible
       icon={open ? 'close' : 'plus'}
       color="#c9a84c"
-      backdropColor="rgba(0,0,0,0.88)"
+      backdropColor={isDark ? 'rgba(5,5,5,0.92)' : 'rgba(239,230,212,0.92)'}
       fabStyle={{
         backgroundColor: isDark ? '#000000' : '#d4cfc5',
         borderRadius: 999,

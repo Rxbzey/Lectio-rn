@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -7,12 +8,12 @@ interface AppBarProps {
   isDark: boolean;
   onBack: () => void;
   onToggleTheme: () => void;
-  progress: Animated.Value;
   onHeightMeasured?: (height: number) => void;
 }
 
-export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggleTheme, progress, onHeightMeasured }) => {
+export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggleTheme, onHeightMeasured }) => {
   const insets = useSafeAreaInsets();
+  const opacity = useRef(new Animated.Value(1)).current;
   const gold = isDark ? '#c5a059' : '#775a19';
   const iconColor = isDark ? '#d4cfc5' : '#3d3629';
   const bg = isDark ? 'rgba(5,5,5,0.72)' : 'rgba(239,230,212,0.72)';
@@ -28,7 +29,7 @@ export const AppBar: React.FC<AppBarProps> = ({ screen, isDark, onBack, onToggle
         left: 0,
         right: 0,
         zIndex: 100,
-        opacity: progress,
+        opacity,
       }}
     >
       <View
