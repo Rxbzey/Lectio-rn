@@ -7,6 +7,7 @@ import { AppBar } from 'components/AppBar';
 import { BooksIndex } from 'components/BooksIndex';
 import { ChapterReader } from 'components/ChapterReader';
 import { LectioVeritatis } from 'components/LectioVeritatis';
+import { SearchScreen } from 'components/SearchScreen';
 import { NumberGridScreen } from 'components/NumberGridScreen';
 import { BOOKS_META, slugifyBookName } from './data/biblia/books-meta';
 import { Animated, Easing, Platform, View, Text, useColorScheme } from 'react-native';
@@ -39,7 +40,7 @@ const paperTheme = {
 
 export default function App() {
   const colorScheme = useColorScheme();
-  const [screen, setScreen] = useState<'home' | 'books' | 'chapters' | 'verses' | 'reader'>('home');
+  const [screen, setScreen] = useState<'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search'>('home');
   const [isDark, setIsDark] = useState(colorScheme === 'dark');
   const [currentBookSlug, setCurrentBookSlug] = useState('genesis');
   const [currentChapter, setCurrentChapter] = useState(1);
@@ -55,12 +56,13 @@ export default function App() {
   const chaptersProgress = useRef(new Animated.Value(0)).current;
   const versesProgress = useRef(new Animated.Value(0)).current;
   const readerProgress = useRef(new Animated.Value(0)).current;
+  const searchProgress = useRef(new Animated.Value(0)).current;
 
   const getBookMeta = (slug: string) => BOOKS_META.find((b) => slugifyBookName(b.name) === slug);
   const selectedBookMeta = getBookMeta(selectedBookSlug);
   const chapterCount = selectedBookMeta?.chapters ?? 0;
 
-  const navigateTo = (nextScreen: 'home' | 'books' | 'chapters' | 'verses' | 'reader') => {
+  const navigateTo = (nextScreen: 'home' | 'books' | 'chapters' | 'verses' | 'reader' | 'search') => {
     if (nextScreen === screen) return;
     setScreen(nextScreen);
 
@@ -95,6 +97,12 @@ export default function App() {
       Animated.timing(readerProgress, {
         toValue: nextScreen === 'reader' ? 1 : 0,
         duration: nextScreen === 'reader' ? duration + 120 : duration,
+        easing,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchProgress, {
+        toValue: nextScreen === 'search' ? 1 : 0,
+        duration,
         easing,
         useNativeDriver: true,
       }),
@@ -136,7 +144,6 @@ export default function App() {
       active = false;
     };
   }, []);
-
 
   const toggleTheme = () => setIsDark((current) => !current);
   const openReader = (bookSlug: string, chapter: number, scrollPercent = 0) => {
@@ -207,7 +214,7 @@ export default function App() {
             onStartReading={handleStartReading}
             onExploreBooks={() => navigateTo('books')}
             onHome={() => navigateTo('home')}
-            onSearch={() => {}}
+            onSearch={() => navigateTo('search')}
           />
         </Animated.View>
 
@@ -239,7 +246,7 @@ export default function App() {
             onClose={() => navigateTo('home')}
             onBookPress={(bookSlug) => openChapters(bookSlug)}
             onHome={() => navigateTo('home')}
-            onSearch={() => {}}
+            onSearch={() => navigateTo('search')}
           />
         </Animated.View>
 
@@ -354,8 +361,35 @@ export default function App() {
           />
         </Animated.View>
 
+        <Animated.View
+          pointerEvents={screen === 'search' ? 'auto' : 'none'}
+          className="absolute inset-0"
+          style={{
+            opacity: searchProgress,
+            transform: [
+              {
+                translateY: searchProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [booksEnterY, 0],
+                }),
+              },
+              {
+                scale: searchProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [hiddenScale, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <SearchScreen
+            isDark={isDark}
+            appBarHeight={appBarHeight}
+            onResultPress={(bookSlug, chapter) => openReader(bookSlug, chapter, 0)}
+          />
+        </Animated.View>
         <AppBar
-          screen={screen === 'home' ? 'home' : screen === 'books' ? 'books' : 'reader'}
+          screen={screen === 'home' ? 'home' : 'reader'}
           isDark={isDark}
           onBack={() => {
             if (screen === 'chapters') navigateTo('books');
@@ -372,7 +406,9 @@ export default function App() {
                   ? chaptersProgress
                   : screen === 'verses'
                     ? versesProgress
-                    : readerProgress
+                    : screen === 'search'
+                      ? searchProgress
+                      : readerProgress
           }
           onHeightMeasured={setAppBarHeight}
         />

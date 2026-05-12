@@ -1,5 +1,7 @@
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNumberGridTheme } from './hooks/useNumberGridTheme';
+import { NumberCell } from './NumberCell';
 
 interface NumberGridScreenProps {
   title: string;
@@ -25,15 +27,8 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
   progress,
 }) => {
   const insets = useSafeAreaInsets();
-  const gold = isDark ? '#c5a059' : '#775a19';
-  const textColor = isDark ? '#c9c4b8' : '#3d3629';
-  const mutedText = isDark ? 'rgba(201,196,184,0.50)' : 'rgba(61,54,41,0.45)';
-  const bgColor = isDark ? '#000000' : '#efe6d4';
-  const cellBg = isDark ? 'rgba(197,160,89,0.08)' : 'rgba(119,90,25,0.06)';
-  const cellBgActive = isDark ? 'rgba(197,160,89,0.22)' : 'rgba(119,90,25,0.16)';
-
+  const theme = useNumberGridTheme(isDark);
   const numbers = Array.from({ length: count }, (_, i) => i + 1);
-
   const opacity = progress ?? new Animated.Value(1);
 
   return (
@@ -42,7 +37,7 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
       className="absolute inset-0"
       style={{
         opacity,
-        backgroundColor: bgColor,
+        backgroundColor: theme.bg,
         paddingTop: appBarHeight || insets.top + 60,
         paddingBottom: insets.bottom,
       }}
@@ -53,14 +48,14 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
           {subtitle ? (
             <Text
               className="text-[11px] uppercase tracking-[0.28em]"
-              style={{ color: gold, fontFamily: 'Inter-Medium', opacity: 0.72 }}
+              style={{ color: theme.gold, fontFamily: 'Inter-Medium', opacity: 0.72 }}
             >
               {subtitle}
             </Text>
           ) : null}
           <Text
             style={{
-              color: textColor,
+              color: theme.textColor,
               fontFamily: 'PlayfairDisplay',
               fontSize: 32,
               lineHeight: 40,
@@ -74,10 +69,10 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
 
       {/* Back link */}
       <Pressable className="px-6 py-3 flex-row items-center gap-2" onPress={onBack}>
-        <View className="w-6 h-px" style={{ backgroundColor: gold, opacity: 0.4 }} />
+        <View className="w-6 h-px" style={{ backgroundColor: theme.gold, opacity: 0.4 }} />
         <Text
           className="text-[11px] uppercase tracking-[0.24em]"
-          style={{ color: mutedText as string, fontFamily: 'Inter-Medium' }}
+          style={{ color: theme.mutedText, fontFamily: 'Inter-Medium' }}
         >
           Volver al índice
         </Text>
@@ -90,41 +85,15 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row flex-wrap">
-          {numbers.map((num) => {
-            const isSelected = num === selectedNumber;
-            return (
-              <Pressable
-                key={num}
-                className="items-center justify-center"
-                style={{
-                  width: '16.666%',
-                  aspectRatio: 1,
-                  padding: 4,
-                }}
-                onPress={() => onSelect(num)}
-              >
-                <View
-                  className="w-full h-full items-center justify-center rounded-lg"
-                  style={{
-                    backgroundColor: isSelected ? cellBgActive : cellBg,
-                    borderWidth: isSelected ? 1 : 0,
-                    borderColor: isSelected ? `${gold}40` : 'transparent',
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: isSelected ? gold : textColor,
-                      fontFamily: isSelected ? 'Inter-Medium' : 'Inter',
-                      fontSize: 16,
-                      opacity: isSelected ? 1 : 0.7,
-                    }}
-                  >
-                    {num}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
+          {numbers.map((num) => (
+            <NumberCell
+              key={num}
+              num={num}
+              isSelected={num === selectedNumber}
+              theme={theme}
+              onPress={onSelect}
+            />
+          ))}
         </View>
       </ScrollView>
     </Animated.View>
