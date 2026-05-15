@@ -9,6 +9,7 @@ interface NumberGridScreenProps {
   count: number;
   isDark: boolean;
   selectedNumber?: number;
+  completedChapters?: number[];
   onSelect: (number: number) => void;
   onBack: () => void;
   appBarHeight?: number;
@@ -20,6 +21,7 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
   count,
   isDark,
   selectedNumber,
+  completedChapters,
   onSelect,
   onBack,
   appBarHeight,
@@ -86,6 +88,7 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
               key={num}
               num={num}
               isSelected={num === selectedNumber}
+              isCompleted={completedChapters?.includes(num) ?? false}
               theme={theme}
               onPress={onSelect}
             />

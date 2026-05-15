@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Platform, useColorScheme } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import {
   useFonts,
   Inter_300Light,
@@ -56,17 +55,6 @@ function AppBarController({ currentRoute, isDark, toggleTheme, onHeightMeasured 
   );
 }
 
-const paperTheme = {
-  ...MD3DarkTheme,
-  colors: {
-    ...MD3DarkTheme.colors,
-    primary: '#c9a84c',
-    secondary: '#d4cfc5',
-    surface: '#080808',
-    onSurface: '#ece7db',
-  },
-};
-
 export type Screen = keyof RootStackParamList;
 
 export function AppNavigator() {
@@ -114,8 +102,7 @@ export function AppNavigator() {
   if (!fontsLoaded) return <SplashScreen isDark={isDark} />;
 
   return (
-    <PaperProvider theme={paperTheme}>
-      <SafeAreaProvider style={{ backgroundColor }}>
+    <SafeAreaProvider style={{ backgroundColor }}>
         <NavigationContainer
           ref={navigationRef}
           onStateChange={(state) => {
@@ -211,6 +198,5 @@ export function AppNavigator() {
         </NavigationContainer>
         <StatusBar hidden />
       </SafeAreaProvider>
-    </PaperProvider>
-  );
+    );
 }

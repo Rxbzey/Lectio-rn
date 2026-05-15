@@ -1,4 +1,4 @@
-import { Animated, Dimensions, Share, Text, View } from 'react-native';
+import { Animated, Dimensions, Pressable, Share, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
@@ -37,6 +37,7 @@ interface ChapterReaderProps {
   onMarks?: () => void;
   onChapters?: () => void;
   onVerses?: () => void;
+  onNextChapter?: () => void;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -62,6 +63,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   onMarks,
   onChapters,
   onVerses,
+  onNextChapter,
 }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
@@ -284,6 +286,37 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
               onVersePress={handleVersePress}
             />
           ))}
+
+          {/* ── Finalizar capítulo ── */}
+          {chapterData && onNextChapter && (
+            <View style={{ paddingHorizontal: 24, paddingTop: 48, paddingBottom: 96, alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 28, width: '100%' }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: isDark ? 'rgba(197,160,89,0.22)' : 'rgba(119,90,25,0.18)' }} />
+                <Text style={{ color: isDark ? 'rgba(201,196,184,0.35)' : 'rgba(61,54,41,0.35)', fontFamily: 'Inter', fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase' }}>
+                  Fin del capítulo
+                </Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: isDark ? 'rgba(197,160,89,0.22)' : 'rgba(119,90,25,0.18)' }} />
+              </View>
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onNextChapter();
+                }}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.75 : 1,
+                  alignItems: 'center',
+                  gap: 10,
+                })}
+              >
+                <Text style={{ color: isDark ? '#c5a059' : '#775a19', fontFamily: 'PlayfairDisplay', fontSize: 22, letterSpacing: 0.5 }}>
+                  Continuar leyendo
+                </Text>
+                <Text style={{ color: isDark ? 'rgba(201,196,184,0.45)' : 'rgba(61,54,41,0.45)', fontFamily: 'Inter-Medium', fontSize: 10, letterSpacing: 2.8, textTransform: 'uppercase' }}>
+                  Capítulo siguiente →
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </Animated.View>
       </Animated.ScrollView>
 

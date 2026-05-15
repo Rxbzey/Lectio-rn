@@ -17,6 +17,23 @@ export function ReaderScreen({ navigation, route, isDark, appBarHeight }: Props)
 
   const getBookMeta = (slug: string) => BOOKS_META.find((b) => slugifyBookName(b.name) === slug);
 
+  const handleNextChapter = () => {
+    const bookMeta = getBookMeta(bookSlug);
+    if (!bookMeta) return;
+    void markChapterAsRead(bookSlug, chapter, bookMeta.chapters);
+    if (chapter < bookMeta.chapters) {
+      navigation.navigate('Reader', { bookSlug, chapter: chapter + 1, scrollPercent: 0 });
+    } else {
+      const currentIndex = BOOKS_META.findIndex((b) => slugifyBookName(b.name) === bookSlug);
+      const nextBook = BOOKS_META[currentIndex + 1];
+      if (nextBook) {
+        navigation.navigate('Reader', { bookSlug: slugifyBookName(nextBook.name), chapter: 1, scrollPercent: 0 });
+      } else {
+        navigation.navigate('Home');
+      }
+    }
+  };
+
   return (
     <ChapterReader
       isDark={isDark}
@@ -47,6 +64,7 @@ export function ReaderScreen({ navigation, route, isDark, appBarHeight }: Props)
       onVerses={() =>
         navigation.navigate('Verses', { bookSlug, chapter, verseCount: versesCountRef.current })
       }
+      onNextChapter={handleNextChapter}
     />
   );
 }
