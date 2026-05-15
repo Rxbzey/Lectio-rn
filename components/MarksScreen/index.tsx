@@ -81,6 +81,7 @@ interface MarksScreenProps {
   appBarHeight?: number;
   onClose?: () => void;
   onOpenMark?: (bookSlug: string, chapter: number, verse: number) => void;
+  onMarkDeleted?: () => void;
 }
 
 const ReflectionEditor: React.FC<{
@@ -198,6 +199,7 @@ export const MarksScreen: React.FC<MarksScreenProps> = ({
   appBarHeight,
   onClose,
   onOpenMark,
+  onMarkDeleted,
 }) => {
   const insets = useSafeAreaInsets();
   const [marks, setMarks] = useState<VerseMarksStore>([]);
@@ -242,6 +244,7 @@ export const MarksScreen: React.FC<MarksScreenProps> = ({
   const handleDelete = async (id: string) => {
     const updated = await deleteVerseMark(id);
     setMarks(updated);
+    onMarkDeleted?.();
   };
 
   const handleSaveReflection = async (id: string, reflection: string) => {

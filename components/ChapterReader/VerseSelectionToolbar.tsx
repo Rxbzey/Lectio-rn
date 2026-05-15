@@ -8,9 +8,11 @@ interface VerseSelectionToolbarProps {
   isDark: boolean;
   selectedCount: number;
   colorNames: Record<MarkColor, string>;
+  hasMarkedVerses?: boolean;
   onCopy: () => void;
   onShare: () => void;
   onMark: (color: MarkColor) => void;
+  onUnmark?: () => void;
   onClear: () => void;
 }
 
@@ -47,9 +49,11 @@ export const VerseSelectionToolbar: React.FC<VerseSelectionToolbarProps> = ({
   isDark,
   selectedCount,
   colorNames,
+  hasMarkedVerses,
   onCopy,
   onShare,
   onMark,
+  onUnmark,
   onClear,
 }) => {
   const insets = useSafeAreaInsets();
@@ -101,7 +105,10 @@ export const VerseSelectionToolbar: React.FC<VerseSelectionToolbarProps> = ({
           <View style={{ flexDirection: 'row', gap: 24, alignItems: 'center' }}>
             <ToolbarButton icon="content-copy" label="Copiar" onPress={onCopy} isDark={isDark} />
             <ToolbarButton icon="share-variant-outline" label="Compartir" onPress={onShare} isDark={isDark} accent />
-            <ToolbarButton icon="bookmark-plus-outline" label="Marcar" onPress={toColors} isDark={isDark} accent />
+            {hasMarkedVerses
+              ? <ToolbarButton icon="bookmark-remove-outline" label="Desmarcar" onPress={() => onUnmark?.()} isDark={isDark} accent />
+              : <ToolbarButton icon="bookmark-plus-outline" label="Marcar" onPress={toColors} isDark={isDark} accent />
+            }
           </View>
           <View style={{ width: 1, height: 28, backgroundColor: border }} />
           <ToolbarButton icon="close" label="Limpiar" onPress={onClear} isDark={isDark} />

@@ -53,6 +53,7 @@ export default function App() {
   const [selectedBookSlug, setSelectedBookSlug] = useState('genesis');
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [initialScrollPercent, setInitialScrollPercent] = useState(0);
+  const [marksRefreshKey, setMarksRefreshKey] = useState(0);
   const [targetVerse, setTargetVerse] = useState<number | undefined>(undefined);
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [bookProgressMap, setBookProgressMap] = useState<BookProgressMap>({});
@@ -312,6 +313,7 @@ export default function App() {
             onMarks={() => navigateTo('marks')}
             onChapters={() => openChapters(currentBookSlug)}
             onVerses={() => openVerses(currentChapter)}
+            marksRefreshKey={marksRefreshKey}
           />
         </Animated.View>
         <Animated.View
@@ -440,6 +442,7 @@ export default function App() {
             appBarHeight={appBarHeight}
             onClose={goBack}
             onOpenMark={(bookSlug, chapter, verse) => openReader(bookSlug, chapter, 0, verse)}
+            onMarkDeleted={() => setMarksRefreshKey((k) => k + 1)}
           />
         </Animated.View>
         <AppBar
