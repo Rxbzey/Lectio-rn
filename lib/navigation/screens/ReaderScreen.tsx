@@ -8,11 +8,9 @@ import { BOOKS_META, slugifyBookName } from '../../../data/biblia/books-meta';
 type Props = NativeStackScreenProps<RootStackParamList, 'Reader'> & {
   isDark: boolean;
   appBarHeight: number;
-  marksRefreshKey: number;
-  onMarkCreated: () => void;
 };
 
-export function ReaderScreen({ navigation, route, isDark, appBarHeight, marksRefreshKey }: Props) {
+export function ReaderScreen({ navigation, route, isDark, appBarHeight }: Props) {
   const { bookSlug, chapter, scrollPercent = 0, targetVerse } = route.params;
   const { updateReadingProgress, markChapterAsRead } = useProgressStore();
   const versesCountRef = useRef(0);
@@ -27,7 +25,6 @@ export function ReaderScreen({ navigation, route, isDark, appBarHeight, marksRef
       appBarHeight={appBarHeight}
       initialScrollPercent={scrollPercent}
       targetVerse={targetVerse}
-      marksRefreshKey={marksRefreshKey}
       onProgressChange={(progress) => {
         const bookMeta = getBookMeta(progress.bookSlug);
         void updateReadingProgress({ ...progress, updatedAt: Date.now() });

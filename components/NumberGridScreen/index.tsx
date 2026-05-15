@@ -12,7 +12,6 @@ interface NumberGridScreenProps {
   onSelect: (number: number) => void;
   onBack: () => void;
   appBarHeight?: number;
-  progress?: Animated.Value;
 }
 
 export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
@@ -24,19 +23,16 @@ export const NumberGridScreen: React.FC<NumberGridScreenProps> = ({
   onSelect,
   onBack,
   appBarHeight,
-  progress,
 }) => {
   const insets = useSafeAreaInsets();
   const theme = useNumberGridTheme(isDark);
   const numbers = Array.from({ length: count }, (_, i) => i + 1);
-  const opacity = progress ?? new Animated.Value(1);
 
   return (
     <Animated.View
       pointerEvents="auto"
       className="absolute inset-0"
       style={{
-        opacity,
         backgroundColor: theme.bg,
         paddingTop: appBarHeight || insets.top + 60,
         paddingBottom: insets.bottom,

@@ -6,10 +6,9 @@ import { useProgressStore } from '../../stores/useProgressStore';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'> & {
   isDark: boolean;
   verseOfDay: { text: string; reference: string } | null;
-  appBarHeight: number;
 };
 
-export function HomeScreen({ navigation, isDark, verseOfDay, appBarHeight }: Props) {
+export function HomeScreen({ navigation, isDark, verseOfDay }: Props) {
   const { readingProgress } = useProgressStore();
   const progressLabel = readingProgress
     ? `${readingProgress.bookName} · Capítulo ${readingProgress.chapter}`

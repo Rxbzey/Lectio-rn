@@ -15,11 +15,6 @@ export interface VerseMark {
   createdAt: number;
 }
 
-export interface MarkColorConfig {
-  color: MarkColor;
-  name: string;
-}
-
 const MARKS_KEY = 'lectio:verse-marks';
 const COLOR_CONFIG_KEY = 'lectio:mark-color-config';
 

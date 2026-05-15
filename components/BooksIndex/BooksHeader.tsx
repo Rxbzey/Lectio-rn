@@ -3,10 +3,9 @@ import { View, Text } from 'react-native';
 interface BooksHeaderProps {
   titleColor: string;
   mutedColor: string;
-  onClose?: () => void;
 }
 
-export const BooksHeader: React.FC<BooksHeaderProps> = ({ titleColor, mutedColor, onClose }) => {
+export const BooksHeader: React.FC<BooksHeaderProps> = ({ titleColor, mutedColor }) => {
   return (
     <View className="w-full pt-4 pb-8 px-6 flex-row justify-between items-start">
       <View className="flex-1 gap-2">

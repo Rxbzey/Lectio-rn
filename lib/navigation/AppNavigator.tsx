@@ -75,7 +75,6 @@ export function AppNavigator() {
   const { initializeProgress } = useProgressStore();
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; reference: string } | null>(null);
-  const [marksRefreshKey, setMarksRefreshKey] = useState(0);
   const navigationRef = useNavigationContainerRef();
   const [currentRoute, setCurrentRoute] = useState<keyof RootStackParamList>('Home');
 
@@ -145,7 +144,6 @@ export function AppNavigator() {
                   {...props}
                   isDark={isDark}
                   verseOfDay={verseOfDay}
-                  appBarHeight={appBarHeight}
                 />
               )}
             </Stack.Screen>
@@ -182,8 +180,6 @@ export function AppNavigator() {
                   {...props}
                   isDark={isDark}
                   appBarHeight={appBarHeight}
-                  marksRefreshKey={marksRefreshKey}
-                  onMarkCreated={() => setMarksRefreshKey((k) => k + 1)}
                 />
               )}
             </Stack.Screen>
@@ -202,7 +198,6 @@ export function AppNavigator() {
                   {...props}
                   isDark={isDark}
                   appBarHeight={appBarHeight}
-                  marksRefreshKey={marksRefreshKey}
                 />
               )}
             </Stack.Screen>

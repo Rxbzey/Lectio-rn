@@ -37,7 +37,6 @@ interface ChapterReaderProps {
   onMarks?: () => void;
   onChapters?: () => void;
   onVerses?: () => void;
-  marksRefreshKey?: number;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -63,7 +62,6 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   onMarks,
   onChapters,
   onVerses,
-  marksRefreshKey,
 }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
@@ -84,7 +82,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({
   useEffect(() => {
     readVerseMarks().then(setVerseMarks);
     readColorConfig().then(setColorNames);
-  }, [marksRefreshKey]);
+  }, []);
   const backgroundColor = isDark ? '#000000' : '#efe6d4';
   const bookName = chapterData?.book.name ?? '';
   const testamentLabel = chapterData?.book.group ?? '';

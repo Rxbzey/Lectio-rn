@@ -6,7 +6,6 @@ export const useBooksIndexTheme = (isDark: boolean) => {
   const mutedColor = isDark ? 'text-cream/60' : 'text-ink/45';
 
   return {
-    isDark,
     bgColor,
     titleColor,
     bodyColor,

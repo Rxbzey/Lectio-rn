@@ -6,10 +6,9 @@ import { useIsFocused } from '@react-navigation/native';
 type Props = NativeStackScreenProps<RootStackParamList, 'Marks'> & {
   isDark: boolean;
   appBarHeight: number;
-  marksRefreshKey: number;
 };
 
-export function MarksNavScreen({ navigation, isDark, appBarHeight, marksRefreshKey }: Props) {
+export function MarksNavScreen({ navigation, isDark, appBarHeight }: Props) {
   const isFocused = useIsFocused();
 
   return (
@@ -21,7 +20,6 @@ export function MarksNavScreen({ navigation, isDark, appBarHeight, marksRefreshK
       onOpenMark={(bookSlug, chapter, verse) =>
         navigation.navigate('Reader', { bookSlug, chapter, scrollPercent: 0, targetVerse: verse })
       }
-      onMarkDeleted={() => {}}
     />
   );
 }

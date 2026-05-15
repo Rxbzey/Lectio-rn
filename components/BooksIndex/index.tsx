@@ -25,7 +25,7 @@ export const BooksIndex: React.FC<BooksIndexProps> = ({ isDark, activeBookSlug, 
 
   return (
     <View className={`flex-1 ${bgColor}`} style={{ paddingTop: appBarHeight || insets.top + 60 }}>
-      <BooksHeader titleColor={titleColor} mutedColor={mutedColor} onClose={onClose} />
+      <BooksHeader titleColor={titleColor} mutedColor={mutedColor} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 128 }}
